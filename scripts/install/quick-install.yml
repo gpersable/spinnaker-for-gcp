@@ -4,14 +4,12 @@ metadata:
   name: halyard
 
 ---
-
 apiVersion: v1
 kind: Namespace
 metadata:
   name: spinnaker
 
 ---
-
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
@@ -21,15 +19,14 @@ roleRef:
   kind: ClusterRole
   name: cluster-admin
 subjects:
-- kind: ServiceAccount
-  name: default
-  namespace: halyard
-- kind: ServiceAccount
-  name: default
-  namespace: spinnaker
+  - kind: ServiceAccount
+    name: default
+    namespace: halyard
+  - kind: ServiceAccount
+    name: default
+    namespace: spinnaker
 
 ---
-
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -39,14 +36,13 @@ metadata:
     app: halyard-storage-claim
 spec:
   accessModes:
-  - ReadWriteOnce
+    - ReadWriteOnce
   resources:
     requests:
       storage: 10Gi
   storageClassName: standard
 
 ---
-
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -73,71 +69,70 @@ spec:
         runAsUser: 1000
         fsGroup: 1000
       containers:
-      - name: halyard-daemon
-        image: us-docker.pkg.dev/spinnaker-community/docker/halyard:$HALYARD_VERSION
-        imagePullPolicy: Always
-        command:
-        - /bin/sh
-        args:
-        - -c
-        # We persist the files on a PersistentVolume. To have sane defaults,
-        # we initialise those files from a ConfigMap if they don't already exist.
-        - "test -f /home/spinnaker/.hal/config || cp -R /home/spinnaker/staging/.hal/. /home/spinnaker/.hal/ && /opt/halyard/bin/halyard"
-        readinessProbe:
-          exec:
-            command:
-            - wget
-            - -q
-            - --spider
-            - http://localhost:8064/health
-        resources:
-          requests:
-            cpu: 10m
-            memory: 256Mi
-        ports:
-        - containerPort: 8064
-        volumeMounts:
-        - name: persistentconfig
-          mountPath: /home/spinnaker/.hal
-        - name: halconfig
-          mountPath: /home/spinnaker/staging/.hal/config
-          subPath: config
-        - name: halconfig
-          mountPath: /home/spinnaker/staging/.hal/default/service-settings/deck.yml
-          subPath: deck.yml
-        - name: halconfig
-          mountPath: /home/spinnaker/staging/.hal/default/service-settings/gate.yml
-          subPath: gate.yml
-        - name: halconfig
-          mountPath: /home/spinnaker/staging/.hal/default/service-settings/fiat.yml
-          subPath: fiat.yml
-        - name: halconfig
-          mountPath: /home/spinnaker/staging/.hal/default/service-settings/redis.yml
-          subPath: redis.yml
-        - name: halconfig
-          mountPath: /home/spinnaker/staging/.hal/default/profiles/clouddriver-local.yml
-          subPath: clouddriver-local.yml
-        - name: halconfig
-          mountPath: /home/spinnaker/staging/.hal/default/profiles/echo-local.yml
-          subPath: echo-local.yml
-        - name: halconfig
-          mountPath: /home/spinnaker/staging/.hal/default/profiles/front50-local.yml
-          subPath: front50-local.yml
-        - name: halconfig
-          mountPath: /home/spinnaker/staging/.hal/default/profiles/gate-local.yml
-          subPath: gate-local.yml
-        - name: halconfig
-          mountPath: /home/spinnaker/staging/.hal/default/profiles/igor-local.yml
-          subPath: igor-local.yml
+        - name: halyard-daemon
+          image: fwpidn/halyard-gcloud-ubuntu:latest
+          imagePullPolicy: Always
+          command:
+            - /bin/sh
+          args:
+            - -c
+            # We persist the files on a PersistentVolume. To have sane defaults,
+            # we initialise those files from a ConfigMap if they don't already exist.
+            - "test -f /home/spinnaker/.hal/config || cp -R /home/spinnaker/staging/.hal/. /home/spinnaker/.hal/ && /opt/halyard/bin/halyard"
+          readinessProbe:
+            exec:
+              command:
+                - wget
+                - -q
+                - --spider
+                - http://localhost:8064/health
+          resources:
+            requests:
+              cpu: 10m
+              memory: 256Mi
+          ports:
+            - containerPort: 8064
+          volumeMounts:
+            - name: persistentconfig
+              mountPath: /home/spinnaker/.hal
+            - name: halconfig
+              mountPath: /home/spinnaker/staging/.hal/config
+              subPath: config
+            - name: halconfig
+              mountPath: /home/spinnaker/staging/.hal/default/service-settings/deck.yml
+              subPath: deck.yml
+            - name: halconfig
+              mountPath: /home/spinnaker/staging/.hal/default/service-settings/gate.yml
+              subPath: gate.yml
+            - name: halconfig
+              mountPath: /home/spinnaker/staging/.hal/default/service-settings/fiat.yml
+              subPath: fiat.yml
+            - name: halconfig
+              mountPath: /home/spinnaker/staging/.hal/default/service-settings/redis.yml
+              subPath: redis.yml
+            - name: halconfig
+              mountPath: /home/spinnaker/staging/.hal/default/profiles/clouddriver-local.yml
+              subPath: clouddriver-local.yml
+            - name: halconfig
+              mountPath: /home/spinnaker/staging/.hal/default/profiles/echo-local.yml
+              subPath: echo-local.yml
+            - name: halconfig
+              mountPath: /home/spinnaker/staging/.hal/default/profiles/front50-local.yml
+              subPath: front50-local.yml
+            - name: halconfig
+              mountPath: /home/spinnaker/staging/.hal/default/profiles/gate-local.yml
+              subPath: gate-local.yml
+            - name: halconfig
+              mountPath: /home/spinnaker/staging/.hal/default/profiles/igor-local.yml
+              subPath: igor-local.yml
       volumes:
-      - name: halconfig
-        configMap:
-          name: halconfig
-      - name: persistentconfig
-        persistentVolumeClaim:
-          claimName: halyard-pv-claim
+        - name: halconfig
+          configMap:
+            name: halconfig
+        - name: persistentconfig
+          persistentVolumeClaim:
+            claimName: halyard-pv-claim
 ---
-
 apiVersion: v1
 kind: Service
 metadata:
@@ -153,7 +148,6 @@ spec:
     stack: halyard
 
 ---
-
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -490,7 +484,6 @@ data:
         connectionTimeoutMillis: 3000
         readTimeoutMillis: 5000
 ---
-
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -508,11 +501,11 @@ spec:
     spec:
       restartPolicy: OnFailure
       containers:
-      - name: hal-deploy-apply
-        # todo use a custom image
-        image: us-docker.pkg.dev/spinnaker-community/docker/halyard:$HALYARD_VERSION
-        command:
-        - /bin/sh
-        args:
-        - -c
-        - "hal deploy apply --daemon-endpoint http://spin-halyard.halyard:8064"
+        - name: hal-deploy-apply
+          # todo use a custom image
+          image: us-docker.pkg.dev/spinnaker-community/docker/halyard:$HALYARD_VERSION
+          command:
+            - /bin/sh
+          args:
+            - -c
+            - "hal deploy apply --daemon-endpoint http://spin-halyard.halyard:8064"
