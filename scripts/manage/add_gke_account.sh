@@ -64,7 +64,7 @@ for r in "${GKE_REQUIRED_ROLES[@]}"; do
 done
 
 mkdir -p ~/.hal/default/credentials
-KUBECONFIG_FILENAME="kubeconfig-$(cat /dev/urandom | tr -dc 'a-z0-9' | fold -w 9 | head -n 1)"
+KUBECONFIG_FILENAME="kubeconfig-$GKE_ACCOUNT_NAME"
 
 bold "Copying ~/.kube/config into ~/.hal/default/credentials/$KUBECONFIG_FILENAME so it can be pushed to your halyard daemon's pod..."
 
